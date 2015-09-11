@@ -1,8 +1,6 @@
 Requirements:
 
-Postfix or other locally run mail server
-Ruby
-Internet access
+Postfix or other locally run mail server, Ruby, Internet access
 
 Configuration:
 
