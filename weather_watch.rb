@@ -16,8 +16,7 @@ class FireWeatherPuller
   end
 
   def pull
-    # Net::HTTP.get('www.srh.noaa.gov', NOAA_FIRE_WEATHER_PATH)
-    File.open('failure4.html').read
+    Net::HTTP.get('www.srh.noaa.gov', NOAA_FIRE_WEATHER_PATH)
   end
 end
 
@@ -97,6 +96,6 @@ triggers = [latest_factors[:temperature].to_i >= TEMPERATURE_TRIGGER,
             latest_factors[:humidity].to_i <= HUMIDITY_TRIGGER,
             latest_factors[:wind].to_i >= WIND_TRIGGER]
 puts "# triggers: #{triggers.count(true)} -- factors: #{latest_factors}"
-# if triggers.count(true) > 1
-#   Mailer.send(parser.latest_text)
-# end
+if triggers.count(true) > 1
+  Mailer.send(parser.latest_text)
+end
