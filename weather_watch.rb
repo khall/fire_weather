@@ -1,8 +1,8 @@
 require 'net/http'
 require 'net/smtp'
 
-SENDER_EMAIL = ''
-RECIPIENT_EMAILS = ['']
+SENDER_EMAIL = 'fire.warning@monroefiredept.org'
+RECIPIENT_EMAILS = ['bigtoe416@yahoo.com', 'rsmith@monroefiredept.org']
 TEMPERATURE_TRIGGER = 90
 HUMIDITY_TRIGGER = 25
 WIND_TRIGGER = 15
@@ -16,7 +16,8 @@ class FireWeatherPuller
   end
 
   def pull
-    Net::HTTP.get('www.srh.noaa.gov', NOAA_FIRE_WEATHER_PATH)
+    # Net::HTTP.get('www.srh.noaa.gov', NOAA_FIRE_WEATHER_PATH)
+    File.open('failure4.html').read
   end
 end
 
@@ -48,8 +49,8 @@ class FireWeatherParser
   end
 
   def get_high_temperature(latest_data)
-    latest_data.match(/TEMPERATURE\.+\d+-(\d+)/)
-    Regexp.last_match(1)
+    latest_data.match(/TEMPERATURE\.+\d+(-| TO )(\d+)/)
+    Regexp.last_match(2)
   end
 
   def get_low_humidity(latest_data)
@@ -96,6 +97,6 @@ triggers = [latest_factors[:temperature].to_i >= TEMPERATURE_TRIGGER,
             latest_factors[:humidity].to_i <= HUMIDITY_TRIGGER,
             latest_factors[:wind].to_i >= WIND_TRIGGER]
 puts "# triggers: #{triggers.count(true)} -- factors: #{latest_factors}"
-if triggers.count(true) > 1
-  Mailer.send(parser.latest_text)
-end
+# if triggers.count(true) > 1
+#   Mailer.send(parser.latest_text)
+# end
