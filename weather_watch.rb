@@ -6,7 +6,8 @@ RECIPIENT_EMAILS = ['bigtoe416@yahoo.com', 'rsmith@monroefiredept.org']
 TEMPERATURE_TRIGGER = 90
 HUMIDITY_TRIGGER = 25
 WIND_TRIGGER = 15
-NOAA_FIRE_WEATHER_PATH = '/maf/version.php?format=txt&product=FWF&site=NWS&issuedby=PQR&ugc=ORZ604'
+NOAA_FIRE_WEATHER_URL = 'https://www.wrh.noaa.gov/fire2/?zone=ORZ604&zonelist=Go&wfo=PQR&header=off'
+# https://www.wrh.noaa.gov/fire2/?zone=ORZ604&zonelist=Go&wfo=pqr&interface=fwzones
 
 # pulls fire weather html from web
 class FireWeatherPuller
@@ -16,7 +17,10 @@ class FireWeatherPuller
   end
 
   def pull
-    Net::HTTP.get('www.srh.noaa.gov', NOAA_FIRE_WEATHER_PATH)
+    uri = URI.parse(NOAA_FIRE_WEATHER_URL)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = true
+    http.get(uri.request_uri).body
   end
 end
 
@@ -28,14 +32,14 @@ class FireWeatherParser
   end
 
   def latest_formatted_data
-    text.match(/<pre id="skipversions" class="glossaryProduct">(.+)<\/pre>/m)
+    text.match(/.+<pre>(.*ORZ604.+)<\/pre>.+/m)
     weather_data = Regexp.last_match(1)
     latest_data = get_latest_data(weather_data)
     parse_data(latest_data)
   end
 
   def get_latest_data(text)
-    text.match(/.+?$$.+?(\.REST OF TODAY\.\.\.|\.TODAY\.\.\.|\.TONIGHT\.\.\.\n)(.+?)\n\n/m)
+    text.match(/.+?(\.REST OF TODAY\.\.\.|\.TODAY\.\.\.|\.TONIGHT\.\.\.\n)(.+)<br> *<br>/m)
     @latest_text = Regexp.last_match(1) + Regexp.last_match(2)
     Regexp.last_match(2)
   end
@@ -48,19 +52,20 @@ class FireWeatherParser
   end
 
   def get_high_temperature(latest_data)
-    latest_data.match(/TEMPERATURE\.+\d+(-| TO )(\d+)/)
-    Regexp.last_match(2)
+    rez = latest_data.match(/TEMPERATURE\.+(AROUND )?(\d+)(-| TO )?(\d+)?./i)
+puts rez
+    Regexp.last_match(4) || Regexp.last_match(2)
   end
 
   def get_low_humidity(latest_data)
-    latest_data.match(/HUMIDITY\.+(\d+)-\d+ PERCENT/)
+    latest_data.match(/HUMIDITY\.+(\d+)-\d+ PERCENT/i)
     Regexp.last_match(1)
   end
 
   def get_high_winds(latest_data)
-    latest_data.match(/20-FOOT WINDS\.+(.+)\* CWR/m)
+    latest_data.match(/20-FOOT WINDS\.+(.+)\* CWR/mi)
     winds = Regexp.last_match(1).gsub("\n", '').gsub(/ +/, ' ')
-    winds.scan(/(\d+) MPH/).flatten.map(&:to_i).sort.last
+    winds.scan(/(\d+) MPH/i).flatten.map(&:to_i).sort.last
   end
 end
 
