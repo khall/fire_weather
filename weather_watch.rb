@@ -83,11 +83,11 @@ From: Fire Weather Daemon <#{SENDER_EMAIL}>
 To: #{RECIPIENT_EMAILS.join(', ')}
 Subject: Fire Weather Warning
 
-http://www.srh.noaa.gov#{NOAA_FIRE_WEATHER_PATH}
+#{NOAA_FIRE_WEATHER_URL}
 
 Extreme fire behavior expected!
 
-#{body}
+#{body.gsub(/<br>/, "\n")}
 EMAIL
     Net::SMTP.start('127.0.0.1') do |smtp|
       smtp.send_message msg, SENDER_EMAIL, RECIPIENT_EMAILS
